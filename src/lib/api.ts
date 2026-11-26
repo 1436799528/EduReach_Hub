@@ -1855,14 +1855,31 @@ export async function sendCbtV2Operation(attemptId: string, kind: 'answer' | 'fi
   return data;
 }
 
-export async function saveConfiguredCbtDraft(attemptId: string, answers: Record<number, number>, questionIndex?: number): Promise<void> {
+export type CbtDraftSaveAck = { saved?: boolean; serverTime?: string };
+
+/**
+ * The server clock, for resynchronising the countdown offset when a page
+ * resumes. Never throws: an unreachable server leaves the current offset in
+ * place rather than disturbing the deadline.
+ */
+export async function fetchServerClock(): Promise<string | null> {
+  try {
+    const body = await jsonFetch<{ time?: string }>('/api/health');
+    return typeof body?.time === 'string' ? body.time : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function saveConfiguredCbtDraft(attemptId: string, answers: Record<number, number>, questionIndex?: number): Promise<CbtDraftSaveAck> {
   const headers = await authHeaders();
   if (!headers.Authorization) throw new EduReachError('Please sign in to save this session.', 'auth', 401);
-  await jsonFetch(`/api/cbt/attempts/${encodeURIComponent(attemptId)}/draft`, {
+  const body = await jsonFetch<CbtDraftSaveAck>(`/api/cbt/attempts/${encodeURIComponent(attemptId)}/draft`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json', ...headers },
     body: JSON.stringify({ answers, questionIndex }),
   });
+  return body ?? {};
 }
 
 export async function submitConfiguredCbt(attemptId: string, answers: Record<number, number>): Promise<CbtSubmitResponse> {

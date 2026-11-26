@@ -11,9 +11,11 @@ import WaveLoader from '../src/components/WaveLoader';
 import { useAuth } from '../src/lib/auth';
 import { usePendingPhase } from '../src/lib/usePendingPhase';
 import {
-  abandonConfiguredCbt, CbtProtocolUnavailableError, fetchCbtAttemptPaper, fetchCbtV2State, saveConfiguredCbtDraft, submitConfiguredCbt, trackEvent,
+  abandonConfiguredCbt, CbtProtocolUnavailableError, fetchCbtAttemptPaper, fetchCbtV2State, fetchServerClock, saveConfiguredCbtDraft, submitConfiguredCbt, trackEvent,
   type CbtAttemptPayload, type CbtQuestionPayload,
 } from '../src/lib/api';
+import { computeCbtCountdown, formatClock, serverOffsetMsFrom } from '../src/lib/cbtCountdown';
+import { backoffDelayMs, DEFAULT_WRITE_BACKOFF } from '../src/lib/retryPolicy';
 import { userFacingError } from '../lib/errors';
 import { classifyFailure } from '../src/lib/failures';
 import { navigateInApp } from '../src/lib/navigation';
@@ -111,15 +113,6 @@ function writeFlags(attemptId: string, flags: Record<number, boolean>) {
   }
 }
 
-function formatClock(totalSeconds: number) {
-  const safe = Math.max(0, Math.floor(totalSeconds));
-  const hours = Math.floor(safe / 3600);
-  const minutes = Math.floor((safe % 3600) / 60);
-  const seconds = safe % 60;
-  const pad = (value: number) => String(value).padStart(2, '0');
-  return hours > 0 ? `${hours}:${pad(minutes)}:${pad(seconds)}` : `${pad(minutes)}:${pad(seconds)}`;
-}
-
 type SaveState = 'idle' | 'saving' | 'saved' | 'pending' | 'error';
 class CbtJournalStorageError extends CbtProtocolUnavailableError {}
 
@@ -139,7 +132,11 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
   const visibleAnswers = v2Paper ? writer.answers : answers;
   const [marked, setMarked] = useState<Record<number, boolean>>({});
   const [index, setIndex] = useState(0);
-  const [clockOffsetMs, setClockOffsetMs] = useState(0);
+  // Device→server clock offset, captured from server responses only. The
+  // countdown is recomputed from the deadline on every tick, so a suspended
+  // tab or device sleep corrects itself instantly and a device with the wrong
+  // time can neither shorten nor extend the examination.
+  const [serverOffsetMs, setServerOffsetMs] = useState(0);
   const [now, setNow] = useState(Date.now());
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [recoveryNotice, setRecoveryNotice] = useState('');
@@ -153,6 +150,10 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
   const submitDialog = useRef<HTMLDialogElement | null>(null);
   const endDialog = useRef<HTMLDialogElement | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const flushRetryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const flushAttempts = useRef(0);
+  const autoSubmitRetryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const autoSubmitAttempts = useRef(0);
   const pendingAnswers = useRef<Record<number, number> | null>(null);
   const pendingIndex = useRef(0);
   const pendingVersion = useRef(0);
@@ -163,6 +164,12 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
   const currentAccount = useRef(user?.id);
   currentAccount.current = user?.id;
   const loadGeneration = useRef(0);
+
+  /** Recompute the device→server offset from a server clock reading. */
+  const resyncClock = useCallback((serverTimeIso: string | null | undefined) => {
+    const offset = serverOffsetMsFrom(serverTimeIso, Date.now());
+    if (offset !== null) setServerOffsetMs(offset);
+  }, []);
 
   const load = useCallback(async () => {
     // Concurrent paper retries must not allow an older response to re-enable
@@ -192,7 +199,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
         setV2Owner(accountId.toLowerCase());
         setAttempt(payload.attempt);
         setQuestions(payload.questions);
-        setClockOffsetMs(Date.parse(payload.serverTime) - Date.now());
+        resyncClock(payload.serverTime);
         setMarked(readFlags(attemptId) ?? {});
         setIndex(Math.max(0, Math.min(payload.attempt.questionIndex || 0, Math.max(0, payload.questions.length - 1))));
         setV2Paper(payload.questions);
@@ -201,7 +208,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
       legacyProtocol.current = true;
       setAttempt(payload.attempt);
       setQuestions(payload.questions);
-      setClockOffsetMs(Date.parse(payload.serverTime) - Date.now());
+      resyncClock(payload.serverTime);
       setMarked(readFlags(attemptId) ?? {});
       // A pending draft is a whole snapshot, not a patch: merging would
       // resurrect answers the student deliberately cleared. Its age relative
@@ -219,7 +226,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
     } finally {
       if (generation === loadGeneration.current) setLoading(false);
     }
-  }, [attemptId]);
+  }, [attemptId, resyncClock]);
 
   useEffect(() => {
     void load();
@@ -241,9 +248,47 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
     return () => clearInterval(timer);
   }, []);
 
-  const expiresAt = attempt?.expiresAt ? Date.parse(attempt.expiresAt) : null;
-  const remainingSeconds = expiresAt === null ? 0 : Math.max(0, Math.floor((expiresAt - (now + clockOffsetMs)) / 1000));
-  const totalSeconds = (attempt?.durationMinutes || 0) * 60;
+  // The countdown is recomputed from the server deadline on every tick — never
+  // by decrementing a counter — so tab suspension, device sleep and refresh are
+  // correct by construction. On resume the clock is also re-read immediately
+  // (the interval may have been throttled) and the offset is resynchronised
+  // with the server clock.
+  const resyncFromServer = useCallback(async () => {
+    setNow(Date.now());
+    resyncClock(await fetchServerClock());
+  }, [resyncClock]);
+
+  useEffect(() => {
+    const onResume = () => {
+      if (document.hidden) return;
+      setNow(Date.now());
+      void resyncFromServer();
+    };
+    window.addEventListener('focus', onResume);
+    window.addEventListener('online', onResume);
+    document.addEventListener('visibilitychange', onResume);
+    return () => {
+      window.removeEventListener('focus', onResume);
+      window.removeEventListener('online', onResume);
+      document.removeEventListener('visibilitychange', onResume);
+    };
+  }, [resyncFromServer]);
+
+  const countdown = useMemo(
+    () =>
+      computeCbtCountdown({
+        expiresAt: attempt?.expiresAt,
+        durationMinutes: attempt?.durationMinutes,
+        serverOffsetMs,
+        deviceNowMs: now,
+      }),
+    [attempt?.durationMinutes, attempt?.expiresAt, now, serverOffsetMs],
+  );
+  // `expiresAt` is the server deadline in epoch ms (null only for a genuinely
+  // untimed session); `remainingSeconds` derives from it alone.
+  const timed = countdown.timed;
+  const expiresAt = countdown.deadlineMs;
+  const remainingSeconds = countdown.remainingSeconds ?? 0;
 
   // The clock is heard, not just seen. The ticking timer stays silent
   // (`aria-live="off"` below); a candidate who cannot see it is told once at
@@ -273,8 +318,12 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
     setSaveState('saving');
     let succeeded = false;
     try {
-      await saveConfiguredCbtDraft(attemptId, snapshot, snapshotIndex);
+      const ack = await saveConfiguredCbtDraft(attemptId, snapshot, snapshotIndex);
       succeeded = true;
+      flushAttempts.current = 0;
+      // Every acknowledged save resynchronises the countdown offset with the
+      // server clock, so a drifting device cannot distort the deadline.
+      resyncClock(ack?.serverTime);
       // An old response is not permission to clear pending work after a new
       // paper load or an unmount changed the active protocol.
       if (legacyProtocol.current && generation === loadGeneration.current && version === pendingVersion.current) {
@@ -292,6 +341,19 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
       if (failure.kind === 'offline' || failure.kind === 'timeout' || failure.kind === 'server') {
         // Storage may be unavailable; keep the latest in-memory draft and report it as pending.
         setSaveState('pending');
+        // Retry the same snapshot with bounded exponential backoff and jitter —
+        // the save is idempotent, so a retry after an uncertain response can
+        // never duplicate or reorder work. Connectivity returning retries
+        // immediately via the 'online' listener below.
+        const retryAttempt = flushAttempts.current + 1;
+        if (retryAttempt < DEFAULT_WRITE_BACKOFF.maxAttempts) {
+          flushAttempts.current = retryAttempt;
+          if (flushRetryTimer.current) clearTimeout(flushRetryTimer.current);
+          flushRetryTimer.current = setTimeout(() => {
+            flushRetryTimer.current = null;
+            void drain();
+          }, backoffDelayMs(retryAttempt, DEFAULT_WRITE_BACKOFF));
+        }
       } else if (failure.kind === 'auth') {
         setSaveState('error');
         setActionError('Your session ended. Sign in again in this tab to keep saving. Your answers may be lost if you leave this page.');
@@ -306,7 +368,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
       // Never spin on an error or assume a timed-out request did not commit.
       if (succeeded && pendingAnswers.current && version !== pendingVersion.current) void drain();
     }
-  }, [attemptId]);
+  }, [attemptId, resyncClock]);
 
   const queueSave = useCallback((nextAnswers: Record<number, number>, nextIndex: number, immediate = false) => {
     if (!legacyProtocol.current) return;
@@ -320,10 +382,30 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
     else saveTimer.current = setTimeout(() => { void flush(); }, 900);
   }, [attemptId, flush]);
 
-  useEffect(() => () => { if (saveTimer.current) clearTimeout(saveTimer.current); }, []);
+  useEffect(
+    () => () => {
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      if (flushRetryTimer.current) clearTimeout(flushRetryTimer.current);
+      if (autoSubmitRetryTimer.current) clearTimeout(autoSubmitRetryTimer.current);
+    },
+    [],
+  );
 
   useEffect(() => {
-    const retry = () => { if (pendingAnswers.current) void flush(); };
+    const retry = () => {
+      // Connectivity returned: retry pending work immediately (a backoff may be
+      // pending; it is superseded by this attempt, which resets the budget).
+      flushAttempts.current = 0;
+      if (flushRetryTimer.current) {
+        clearTimeout(flushRetryTimer.current);
+        flushRetryTimer.current = null;
+      }
+      if (pendingAnswers.current) void flush();
+      // A deadline submission that could not be confirmed retries immediately
+      // when the connection returns (idempotent server flow; the in-flight
+      // lock and the closed state prevent any duplicate submission).
+      if (autoSubmitStarted.current) void submitRunnerRef.current?.('timer');
+    };
     window.addEventListener('online', retry);
     return () => window.removeEventListener('online', retry);
   }, [flush]);
@@ -388,7 +470,13 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
           ? 'Time is up. The examination was closed and nothing was submitted.'
           : 'This attempt had already expired, so nothing was submitted.');
       } else if (failure.kind === 'offline' || failure.kind === 'timeout' || failure.kind === 'server') {
-        setActionError('Your submission could not be confirmed. Keep this page open, check your connection and your results before trying again.');
+        setActionError(reason === 'timer'
+          ? 'Time is up. The submission could not be confirmed and will be retried automatically; keep this page open.'
+          : 'Your submission could not be confirmed. Keep this page open, check your connection and your results before trying again.');
+        // The submit endpoint is idempotent (a retry returns the stored result),
+        // so the same submission is retried with bounded backoff and jitter
+        // instead of abandoning the paper at the deadline.
+        scheduleSubmitRetryRef.current?.(reason);
       } else {
         setActionError(userFacingError(error, 'Your paper could not be submitted. Please try again.'));
       }
@@ -398,14 +486,40 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
     }
   }, [answers, attempt, closed, submitting, v2Paper, writer]);
 
+  // Retries of an unconfirmed submission go through refs so the newest closure
+  // (with the latest answers and state) is always the one that runs.
+  const submitRunnerRef = useRef<((reason: 'manual' | 'timer') => void) | null>(null);
+  useEffect(() => {
+    submitRunnerRef.current = (reason) => {
+      void submit(reason);
+    };
+  }, [submit]);
+  const scheduleSubmitRetryRef = useRef<((reason: 'manual' | 'timer') => void) | null>(null);
+  const scheduleSubmitRetry = useCallback((reason: 'manual' | 'timer') => {
+    const attempt = autoSubmitAttempts.current + 1;
+    if (attempt >= DEFAULT_WRITE_BACKOFF.maxAttempts) return;
+    autoSubmitAttempts.current = attempt;
+    if (autoSubmitRetryTimer.current) clearTimeout(autoSubmitRetryTimer.current);
+    autoSubmitRetryTimer.current = setTimeout(() => {
+      autoSubmitRetryTimer.current = null;
+      void submitRunnerRef.current?.(reason);
+    }, backoffDelayMs(attempt, DEFAULT_WRITE_BACKOFF));
+  }, []);
+  useEffect(() => {
+    scheduleSubmitRetryRef.current = scheduleSubmitRetry;
+  }, [scheduleSubmitRetry]);
+
   // Time expired: stop the session exactly once, and never show negative time.
+  // The submission travels the idempotent server flow; a network failure at
+  // zero schedules a bounded retry (see the submit handler) rather than
+  // abandoning the paper.
   useEffect(() => {
     if (!attempt || closed || loading) return;
-    if (expiresAt !== null && remainingSeconds === 0 && !autoSubmitStarted.current) {
+    if (timed && remainingSeconds === 0 && !autoSubmitStarted.current) {
       autoSubmitStarted.current = true;
       void submit('timer');
     }
-  }, [attempt, closed, expiresAt, loading, remainingSeconds, submit]);
+  }, [attempt, closed, loading, remainingSeconds, submit, timed]);
 
   const endTest = useCallback(async () => {
     if (sessionActionInFlight.current) return;
@@ -429,7 +543,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
   const choose = useCallback((optionIndex: number) => {
     if (closed) return;
     if (v2Paper) {
-      if ((expiresAt === null || remainingSeconds > 0) && questions[index]) {
+      if ((!timed || remainingSeconds > 0) && questions[index]) {
         void writer.choose(questions[index], optionIndex);
       }
       return;
@@ -440,11 +554,11 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
       queueSave(next, index);
       return next;
     });
-  }, [closed, expiresAt, index, questions, queueSave, remainingSeconds, v2Paper, writer]);
+  }, [closed, index, questions, queueSave, remainingSeconds, timed, v2Paper, writer]);
 
   const clearAnswer = useCallback(() => {
     if (closed) return;
-    if (v2Paper) { if ((expiresAt === null || remainingSeconds > 0) && questions[index]) void writer.choose(questions[index], null); return; }
+    if (v2Paper) { if ((!timed || remainingSeconds > 0) && questions[index]) void writer.choose(questions[index], null); return; }
     if (!legacyProtocol.current) return;
     setAnswers((current) => {
       const next = { ...current };
@@ -452,7 +566,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
       queueSave(next, index);
       return next;
     });
-  }, [closed, expiresAt, index, questions, queueSave, remainingSeconds, v2Paper, writer]);
+  }, [closed, index, questions, queueSave, remainingSeconds, timed, v2Paper, writer]);
 
   const goTo = useCallback((nextIndex: number) => {
     if (nextIndex < 0 || nextIndex >= questions.length) return;
@@ -590,18 +704,18 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
   const question = questions[index];
   const selected = visibleAnswers[question?.position];
   const isMarked = Boolean(marked[question?.position]);
-  const timeAlmostUp = remainingSeconds <= 300;
-  const progressPercent = totalSeconds ? Math.min(100, Math.round(((totalSeconds - remainingSeconds) / totalSeconds) * 100)) : 0;
+  const timeAlmostUp = countdown.timeAlmostUp;
+  const progressPercent = countdown.progressPercent;
   const isLastQuestion = index === questions.length - 1;
   const unansweredCount = questions.length - answeredCount;
-  const v2SubmittingBlocked = Boolean(v2Paper && (writer.phase !== 'active' || (expiresAt !== null && remainingSeconds <= 0) || writer.rows.some(row => ['pending', 'conflicted', 'closed'].includes(row.status))));
+  const v2SubmittingBlocked = Boolean(v2Paper && (writer.phase !== 'active' || (timed && remainingSeconds <= 0) || writer.rows.some(row => ['pending', 'conflicted', 'closed'].includes(row.status))));
   // A pending answer means the server has not confirmed the last change. Do not
   // let a candidate stack another answer on top of it: review the pending row
   // first (the same rule the submit control already enforces).
   const v2OptionBlocked = Boolean(
     v2Paper &&
       (writer.phase !== 'active' ||
-        (expiresAt !== null && remainingSeconds <= 0) ||
+        (timed && remainingSeconds <= 0) ||
         writer.rows.some(row => ['pending', 'conflicted', 'closed'].includes(row.status))),
   );
   const currentSubjectEntry = subjectPlan.length > 1
@@ -639,11 +753,11 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
         </div>
 
         <div className="er-exam-bar-controls">
-          <div className="er-exam-timer" role="timer" aria-live="off" aria-label={`${formatClock(remainingSeconds)} remaining`}>
+          <div className="er-exam-timer" role="timer" aria-live="off" aria-label={timed ? `${formatClock(remainingSeconds)} remaining` : 'No time limit'}>
             <Clock3 size={15} aria-hidden="true" />
-            <b className={timeAlmostUp ? 'is-critical' : ''}>{formatClock(remainingSeconds)}</b>
-            <span>remaining</span>
-            <i className="er-exam-timer-track" aria-hidden="true"><span style={{ width: `${progressPercent}%` }} /></i>
+            <b className={timeAlmostUp ? 'is-critical' : ''}>{timed ? formatClock(remainingSeconds) : 'No limit'}</b>
+            <span>{timed ? 'remaining' : 'time limit'}</span>
+            {timed && <i className="er-exam-timer-track" aria-hidden="true"><span style={{ width: `${progressPercent}%` }} /></i>}
           </div>
 
           {/* Threshold announcements only; the ticking clock itself stays silent. */}
@@ -671,7 +785,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
             <p>These are the last confirmed server answers, not confirmation that pending local work is saved. Review unsaved answers separately below.</p>
             <ol>{questions.map(item => <li key={item.id}>{item.text}: {visibleAnswers[item.position] === undefined ? 'No answer' : item.options[visibleAnswers[item.position]]}</li>)}</ol>
           </section>}
-          {expiresAt !== null && remainingSeconds <= 0 && <p>Time has expired; no further answers can be entered. Pending work remains in this browser.</p>}
+          {timed && remainingSeconds <= 0 && <p>Time has expired; no further answers can be entered. Pending work remains in this browser.</p>}
           {writer.phase !== 'expired' && <button type="button" className="hub-outline-btn" disabled={writer.busy || writer.phase === 'loading'} onClick={() => { if (window.confirm('Take over writing on this tab? Any other active writer will be revoked. Unsaved work on other devices must be reviewed separately.')) void writer.takeover(); }}>Take over writing</button>}
           {(writer.phase === 'error' || (writer.phase === 'active' && writer.rows.some(row => row.status === 'pending'))) && <button type="button" className="hub-outline-btn" disabled={writer.busy} onClick={() => writer.phase === 'error' ? void load() : void writer.retry()}>Retry connection</button>}
           {writer.rows.filter(row => row.status === 'pending' || row.status === 'conflicted' || row.status === 'closed').map(row => {

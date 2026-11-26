@@ -22,6 +22,7 @@ import { isProvenanceGuardRefusal, questionProvenanceRefusal } from './src/serve
 import { isAppRoute } from './src/app/routePaths.generated';
 import { SERVICE_REQUEST_TRANSITIONS } from './src/lib/serviceRequestTransitions';
 import { resolveAppRole, type Capability } from './src/lib/capabilities';
+import { effectiveCbtDeadlineIso } from './src/lib/cbtCountdown';
 import { mockCombinationError, previewPlan } from './src/lib/cbt-config';
 import { httpStatusForErrorMessage, userFacingError as normalizeUserFacingError } from './lib/errors';
 import { getServerSupabaseClient, supabaseFetch } from './lib/supabase-server';
@@ -270,7 +271,10 @@ async function requireUser(req: express.Request, capability: Capability = 'dashb
 const reportReadiness = createReadinessReporter();
 
 app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok', service: 'edureach' });
+  // `time` is the server clock: the exam hall uses it to resynchronise its
+  // deadline offset when a page resumes, so a drifting device clock cannot
+  // distort the countdown it displays.
+  res.json({ status: 'ok', service: 'edureach', time: new Date().toISOString() });
 });
 
 /**
@@ -6153,7 +6157,15 @@ app.get('/api/cbt/attempts/:attemptId/paper', async (req, res) => {
         examId: attemptRow.exam_id,
         status: attemptRow.status,
         startedAt: attemptRow.started_at,
-        expiresAt: attemptRow.expires_at,
+        // The authoritative deadline, resolved server-side from stored columns
+        // only: `expires_at` when set, else `started_at + duration_minutes` for
+        // legacy rows inserted without one. Never null for a timed attempt, so
+        // the hall cannot show a frozen clock or reset one on refresh.
+        expiresAt: effectiveCbtDeadlineIso({
+          expires_at: attemptRow.expires_at,
+          started_at: attemptRow.started_at,
+          duration_minutes: attemptRow.duration_minutes,
+        }),
         mode: attemptRow.mode,
         durationMinutes: attemptRow.duration_minutes,
         programme: attemptRow.programme,
@@ -6428,7 +6440,9 @@ app.patch('/api/cbt/attempts/:attemptId/draft', async (req, res) => {
     if (error?.code === 'P0001' && error.message === 'CBT protocol mismatch.')
       return res.status(409).json({ error: 'CBT protocol mismatch.' });
     if (error) throw error;
-    res.json({ saved: true, ...(data as Record<string, unknown>) });
+    // `serverTime` lets the hall resynchronise its deadline offset on every
+    // acknowledged save; `saved` stays for older clients.
+    res.json({ saved: true, ...(data as Record<string, unknown>), serverTime: new Date().toISOString() });
   } catch (error) {
     log.error(
       'cbt.draft_save_failed',
