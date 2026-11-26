@@ -29,13 +29,30 @@ for (const path of ['/api', '/api/admin/users', '/api/cbt/attempts/id/progress',
     assert.equal(intercepted, false);
   });
 }
-test('hashed JavaScript and CSS bundles bypass service-worker caching', () => {
-  const { handlers } = worker();
+test('versioned JavaScript and CSS bundles are cached for offline reopen', async () => {
+  const { handlers, cached } = worker();
+  const tasks: Promise<void>[] = [];
   for (const path of ['/assets/app-a1b2c3.js', '/assets/app-a1b2c3.css']) {
-    let intercepted = false;
-    handlers.fetch({ request: new Request(`https://example.test${path}`), respondWith: () => { intercepted = true; } });
-    assert.equal(intercepted, false, `${path} should remain deployment-cache controlled`);
+    let response: Promise<Response>;
+    handlers.fetch({ request: new Request(`https://example.test${path}`), respondWith: (promise: Promise<Response>) => { response = promise; }, waitUntil: (promise: Promise<void>) => tasks.push(promise) });
+    assert.equal(await (await response!).text(), 'asset');
   }
+  await Promise.all(tasks);
+  // Vite changes the file name whenever the content changes, so these cached
+  // copies can never go stale.
+  assert.deepEqual(cached, ['https://example.test/assets/app-a1b2c3.js', 'https://example.test/assets/app-a1b2c3.css']);
+});
+
+test('a cached versioned bundle is served without the network on reopen', async () => {
+  const hit = new Response('cached-bundle');
+  const { handlers, context } = worker();
+  (context.caches as { match: unknown }).match = async () => hit;
+  let fetched = false;
+  context.fetch = async () => { fetched = true; return new Response('network'); };
+  let response: Promise<Response>;
+  handlers.fetch({ request: new Request('https://example.test/assets/app-a1b2c3.js'), respondWith: (promise: Promise<Response>) => { response = promise; }, waitUntil: () => {} });
+  assert.equal(await response!, hit);
+  assert.equal(fetched, false, 'the network is not consulted for a cached versioned bundle');
 });
 test('even asset URLs with Authorization bypass service worker', () => {
   const { handlers } = worker();

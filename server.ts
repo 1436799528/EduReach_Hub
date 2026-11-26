@@ -5369,7 +5369,7 @@ app.get('/api/cbt/exams/:examId/subjects', async (req, res) => {
  */
 app.post('/api/cbt/exams/:examId/attempts', rateLimitFor(RATE_LIMIT_RULES.cbtStart), async (req, res) => {
   try {
-    const { rpcSupabase } = await requireUser(req, 'cbt.attempt');
+    const { supabase, rpcSupabase, user } = await requireUser(req, 'cbt.attempt');
     const mode = String(req.body?.mode || 'practice')
       .trim()
       .toLowerCase();
@@ -5463,7 +5463,7 @@ app.post('/api/cbt/exams/:examId/attempts', rateLimitFor(RATE_LIMIT_RULES.cbtSta
     const row = (Array.isArray(data) ? data[0] : data) as StartAttemptRow | null;
     if (!row) return res.status(409).json({ error: 'The practice session could not be created. Please try again.' });
 
-    res.status(row.resumed ? 200 : 201).json({
+    const responseBody: Record<string, unknown> = {
       attempt: {
         id: row.attempt_id,
         startedAt: row.started_at,
@@ -5475,7 +5475,24 @@ app.post('/api/cbt/exams/:examId/attempts', rateLimitFor(RATE_LIMIT_RULES.cbtSta
         plan: row.subject_plan || [],
         resumed: Boolean(row.resumed),
       },
-    });
+    };
+    // The hall renders from this same paper bundle without a fresh network
+    // wait and revalidates in the background. Only a classifiable,
+    // owner-readable paper is embedded; anything else stays a normal
+    // follow-up load.
+    try {
+      const bundle = await loadCbtPaperBundle(
+        supabase,
+        rpcSupabase,
+        String(row.attempt_id),
+        user.id,
+        cbtV2LocalRehearsalEnabled(),
+      );
+      if (bundle.status === 200) responseBody.paper = bundle.body;
+    } catch {
+      // The hall loads the paper itself.
+    }
+    res.status(row.resumed ? 200 : 201).json(responseBody);
   } catch (error) {
     log.error(
       'cbt.start_failed',
@@ -6024,128 +6041,156 @@ async function cbtV2LocalWrite(req: express.Request, res: express.Response, kind
 app.patch('/api/cbt/v2/attempts/:attemptId/answer', (req, res) => cbtV2LocalWrite(req, res, 'answer'));
 app.post('/api/cbt/v2/attempts/:attemptId/finalize', (req, res) => cbtV2LocalWrite(req, res, 'finalize'));
 
-/** The frozen paper for one attempt, plus the student's saved draft. Owner only. */
-app.get('/api/cbt/attempts/:attemptId/paper', async (req, res) => {
-  try {
-    const { supabase, rpcSupabase, user } = await requireUser(req, 'cbt.attempt');
-    const localVersioned = cbtV2LocalRehearsalEnabled();
-    if (!CBT_V2_UUID.test(req.params.attemptId)) return res.status(400).json({ error: 'Invalid attempt.' });
-    const { data: attemptRow, error: attemptError } = await supabase
+/**
+ * The frozen paper for one attempt, plus the student's saved draft. Owner only.
+ *
+ * Built as a shared bundle so the start endpoint can hand the hall its paper
+ * in the same response that creates the attempt: one network round trip fewer
+ * at CBT start. The reader refuses any attempt it cannot classify.
+ */
+async function loadCbtPaperBundle(
+  supabase: Awaited<ReturnType<typeof requireUser>>['supabase'],
+  rpcSupabase: Awaited<ReturnType<typeof requireUser>>['rpcSupabase'],
+  attemptId: string,
+  userId: string,
+  localVersioned: boolean,
+): Promise<{ status: number; body: unknown }> {
+  const fail = (status: number, error: string) => ({ status, body: { error } });
+  // One round trip for the owner-scoped attempt and its protocol
+  // classification. The protocol column is still pending in some production
+  // environments (docs/operations/ENVIRONMENTS.md §7): there, one extra read
+  // of the same row replaces it, and only 'legacy' can be assumed.
+  const columns =
+    'id,exam_id,status,started_at,expires_at,current_question,answers_draft,selected_subjects,mode,duration_minutes,programme,subject_plan,question_ids,protocol,cbt_exams(title,exam_body,subject)';
+  type PaperAttemptRow = {
+    id: string;
+    exam_id: string;
+    status: string;
+    started_at: string;
+    expires_at: string | null;
+    current_question: number | null;
+    answers_draft: Record<number, number> | null;
+    selected_subjects: string[] | null;
+    mode: string;
+    duration_minutes: number | null;
+    programme: unknown;
+    subject_plan: unknown[] | null;
+    question_ids: unknown;
+    protocol?: string | null;
+    cbt_exams?: { title?: string | null; exam_body?: string | null; subject?: string | null } | null;
+  };
+  let attemptSelect = await supabase
+    .from('cbt_attempts')
+    .select(columns)
+    .eq('id', attemptId)
+    .eq('user_id', userId)
+    .maybeSingle();
+  let attemptRow = attemptSelect.data as PaperAttemptRow | null;
+  let attemptError = attemptSelect.error;
+  let storedProtocol: string | null = null;
+
+  if (attemptError && attemptError.code === '42703') {
+    attemptSelect = await supabase
       .from('cbt_attempts')
-      .select(
-        'id,exam_id,status,started_at,expires_at,current_question,answers_draft,selected_subjects,mode,duration_minutes,programme,subject_plan,question_ids,cbt_exams(title,exam_body,subject)',
-      )
-      .eq('id', req.params.attemptId)
-      .eq('user_id', user.id)
+      .select(columns.replace(',protocol,', ','))
+      .eq('id', attemptId)
+      .eq('user_id', userId)
       .maybeSingle();
-    if (attemptError) return res.status(503).json({ error: 'Unable to load this CBT attempt. Please try again.' });
-    if (!attemptRow) return res.status(404).json({ error: 'CBT attempt not found.' });
+    attemptRow = attemptSelect.data as PaperAttemptRow | null;
+    attemptError = attemptSelect.error;
+    if (!attemptError && attemptRow && !localVersioned) storedProtocol = 'legacy';
+  } else if (!attemptError && attemptRow) {
     // Classification always comes from the owner-scoped stored attempt, even
     // when v2 rehearsal is disabled. Never send a known v2 attempt through
     // the legacy reader. This requires the protocol migration before rollout.
-    const lookup = await supabase
-      .from('cbt_attempts')
-      .select('protocol')
-      .eq('id', req.params.attemptId)
-      .eq('user_id', user.id)
-      .maybeSingle();
+    const protocol = String(attemptRow.protocol);
+    if (protocol === 'legacy' || protocol === 'v2') storedProtocol = protocol;
+  }
 
-    let storedProtocol: string;
+  if (attemptError) return fail(503, 'Unable to load this CBT attempt. Please try again.');
+  if (!attemptRow) return fail(404, 'CBT attempt not found.');
+  if (storedProtocol === null) return fail(503, 'Unable to confirm this CBT protocol.');
+  if (storedProtocol === 'v2' && !localVersioned) return fail(503, 'CBT versioned rehearsal is unavailable.');
 
-    if (lookup.error) {
-      if (lookup.error.code === '42703' && !localVersioned) {
-        storedProtocol = 'legacy';
-      } else {
-        return res.status(503).json({ error: 'Unable to confirm this CBT protocol.' });
-      }
-    } else if (lookup.data && ['legacy', 'v2'].includes(String(lookup.data.protocol))) {
-      storedProtocol = lookup.data.protocol;
-    } else {
-      return res.status(503).json({ error: 'Unable to confirm this CBT protocol.' });
+  let paper: CbtPaperRow[];
+  if (storedProtocol === 'v2') {
+    // Restricted questions are served only to an actively assigned candidate.
+    const access = await rpcSupabase.rpc('cbt_bank_candidate_access', { p_exam: attemptRow.exam_id });
+    if (access.error) return fail(503, 'Unable to load this CBT attempt. Please try again.');
+    if (access.data !== true) return fail(404, 'CBT attempt not found.');
+    // Expired attempts may still be opened for local pending-work review;
+    // the DB session/answer gateways cannot grant them a writing lease.
+    if (!['in_progress', 'expired'].includes(String(attemptRow.status)))
+      return fail(409, 'This CBT attempt is not active.');
+    // The legacy paper RPC deliberately refuses v2. Read only the owner's
+    // frozen IDs, never answer keys, and refuse a missing/ambiguous mapping.
+    // Like the legacy frozen reader, resuming an existing paper does not
+    // depend on whether its exam bank was subsequently deactivated.
+    // This branch is no wider than the existing loopback rehearsal guard.
+    const ids = attemptRow.question_ids;
+    if (
+      !Array.isArray(ids) ||
+      ids.length === 0 ||
+      ids.some((id) => typeof id !== 'string' || !CBT_V2_UUID.test(id)) ||
+      new Set(ids.map((id: string) => id.toLowerCase())).size !== ids.length
+    ) {
+      return fail(409, 'This attempt requires review.');
     }
-
-    if (storedProtocol === 'v2' && !localVersioned)
-      return res.status(503).json({ error: 'CBT versioned rehearsal is unavailable.' });
-
-    let paper: CbtPaperRow[];
-    if (storedProtocol === 'v2') {
-      // Restricted questions are served only to an actively assigned candidate.
-      const access = await rpcSupabase.rpc('cbt_bank_candidate_access', { p_exam: attemptRow.exam_id });
-      if (access.error) return res.status(503).json({ error: 'Unable to load this CBT attempt. Please try again.' });
-      if (access.data !== true) return res.status(404).json({ error: 'CBT attempt not found.' });
-      // Expired attempts may still be opened for local pending-work review;
-      // the DB session/answer gateways cannot grant them a writing lease.
-      if (!['in_progress', 'expired'].includes(String(attemptRow.status)))
-        return res.status(409).json({ error: 'This CBT attempt is not active.' });
-      // The legacy paper RPC deliberately refuses v2. Read only the owner's
-      // frozen IDs, never answer keys, and refuse a missing/ambiguous mapping.
-      // Like the legacy frozen reader, resuming an existing paper does not
-      // depend on whether its exam bank was subsequently deactivated.
-      // This branch is no wider than the existing loopback rehearsal guard.
-      const ids = attemptRow.question_ids;
-      if (
-        !Array.isArray(ids) ||
-        ids.length === 0 ||
-        ids.some((id) => typeof id !== 'string' || !CBT_V2_UUID.test(id)) ||
-        new Set(ids.map((id) => id.toLowerCase())).size !== ids.length
-      ) {
-        return res.status(409).json({ error: 'This attempt requires review.' });
-      }
-      const { data: questions, error } = await supabase
-        .from('exam_questions')
-        .select('id,subject,question_text,option_a,option_b,option_c,option_d')
-        .eq('exam_id', attemptRow.exam_id)
-        .neq('review_status', 'rejected')
-        .in('id', ids);
-      if (error || !Array.isArray(questions))
-        return res.status(503).json({ error: 'Unable to load this CBT attempt. Please try again.' });
-      const byId = new Map(questions.map((q) => [String(q.id).toLowerCase(), q]));
-      if (
-        questions.length !== ids.length ||
-        byId.size !== ids.length ||
-        ids.some((id) => !byId.has(id.toLowerCase()))
-      ) {
-        return res.status(409).json({ error: 'This attempt requires review.' });
-      }
-      paper = ids.map((id, index) => {
-        const q = byId.get(id.toLowerCase())!;
-        return {
-          position: index + 1,
-          subject: typeof q.subject === 'string' ? q.subject.trim() : q.subject,
-          question_id: id,
-          question_text: q.question_text,
-          option_a: q.option_a,
-          option_b: q.option_b,
-          option_c: q.option_c,
-          option_d: q.option_d,
-        };
-      });
-    } else {
-      const { data, error: paperError } = await rpcSupabase.rpc('get_cbt_attempt_paper', {
-        p_attempt_id: req.params.attemptId,
-      });
-      if (paperError) {
-        // Recognize only the RPC's exact domain refusals; an infrastructure
-        // error mentioning a missing function is not a missing student attempt.
-        if (paperError.code === 'P0001' && paperError.message === 'CBT attempt not found.')
-          return res.status(404).json({ error: 'CBT attempt not found.' });
-        if (paperError.code === 'P0001' && paperError.message === 'This CBT attempt has expired.')
-          return res.status(409).json({ error: 'This CBT attempt has expired.' });
-        if (paperError.code === 'P0001' && paperError.message === 'CBT protocol mismatch.')
-          return res.status(409).json({ error: 'CBT protocol mismatch.' });
-        return res.status(503).json({ error: 'Unable to load this CBT attempt. Please try again.' });
-      }
-      if (!Array.isArray(data))
-        return res.status(503).json({ error: 'Unable to load this CBT attempt. Please try again.' });
-      paper = data;
+    const { data: questions, error } = await supabase
+      .from('exam_questions')
+      .select('id,subject,question_text,option_a,option_b,option_c,option_d')
+      .eq('exam_id', attemptRow.exam_id)
+      .neq('review_status', 'rejected')
+      .in('id', ids as string[]);
+    if (error || !Array.isArray(questions)) return fail(503, 'Unable to load this CBT attempt. Please try again.');
+    const byId = new Map(questions.map((q) => [String(q.id).toLowerCase(), q]));
+    if (
+      questions.length !== ids.length ||
+      byId.size !== ids.length ||
+      ids.some((id: string) => !byId.has(id.toLowerCase()))
+    ) {
+      return fail(409, 'This attempt requires review.');
     }
+    paper = ids.map((id, index) => {
+      const q = byId.get(id.toLowerCase())!;
+      return {
+        position: index + 1,
+        subject: typeof q.subject === 'string' ? q.subject.trim() : q.subject,
+        question_id: id,
+        question_text: q.question_text,
+        option_a: q.option_a,
+        option_b: q.option_b,
+        option_c: q.option_c,
+        option_d: q.option_d,
+      };
+    });
+  } else {
+    const { data, error: paperError } = await rpcSupabase.rpc('get_cbt_attempt_paper', {
+      p_attempt_id: attemptId,
+    });
+    if (paperError) {
+      // Recognize only the RPC's exact domain refusals; an infrastructure
+      // error mentioning a missing function is not a missing student attempt.
+      if (paperError.code === 'P0001' && paperError.message === 'CBT attempt not found.')
+        return fail(404, 'CBT attempt not found.');
+      if (paperError.code === 'P0001' && paperError.message === 'This CBT attempt has expired.')
+        return fail(409, 'This CBT attempt has expired.');
+      if (paperError.code === 'P0001' && paperError.message === 'CBT protocol mismatch.')
+        return fail(409, 'CBT protocol mismatch.');
+      return fail(503, 'Unable to load this CBT attempt. Please try again.');
+    }
+    if (!Array.isArray(data)) return fail(503, 'Unable to load this CBT attempt. Please try again.');
+    paper = data;
+  }
 
-    const examMeta = (attemptRow.cbt_exams || {}) as {
-      title?: string | null;
-      exam_body?: string | null;
-      subject?: string | null;
-    };
-    res.json({
+  const examMeta = (attemptRow.cbt_exams || {}) as {
+    title?: string | null;
+    exam_body?: string | null;
+    subject?: string | null;
+  };
+  return {
+    status: 200,
+    body: {
       // The server clock, so a device with the wrong time still shows the true
       // remaining time instead of extending or shortening the examination.
       serverTime: new Date().toISOString(),
@@ -6188,7 +6233,18 @@ app.get('/api/cbt/attempts/:attemptId/paper', async (req, res) => {
         text: row.question_text,
         options: [row.option_a, row.option_b, row.option_c, row.option_d],
       })),
-    });
+    },
+  };
+}
+
+/** The frozen paper for one attempt, plus the student's saved draft. Owner only. */
+app.get('/api/cbt/attempts/:attemptId/paper', async (req, res) => {
+  try {
+    const { supabase, rpcSupabase, user } = await requireUser(req, 'cbt.attempt');
+    const localVersioned = cbtV2LocalRehearsalEnabled();
+    if (!CBT_V2_UUID.test(req.params.attemptId)) return res.status(400).json({ error: 'Invalid attempt.' });
+    const bundle = await loadCbtPaperBundle(supabase, rpcSupabase, req.params.attemptId, user.id, localVersioned);
+    return res.status(bundle.status).json(bundle.body);
   } catch (error) {
     log.error(
       'cbt.paper_failed',
