@@ -23,6 +23,15 @@ in a document, a log or a commit.
 `ArbsOdd` (`huqvshwirmywinikvrnf`) is an **inactive** Supabase project. It is not
 an environment; nothing may point at it.
 
+**Function vs database regions (production audit).** The Netlify API function
+deploys from `iad` (us-east-1) while production `EduReach-V1` is `eu-west-1`, so
+every database round trip the function makes — including the multi-statement
+work inside one CBT paper or attempt request — crosses the Atlantic. The
+architecture requires the function region to sit close to the database
+(`docs/architecture/SYSTEM-ARCHITECTURE.md`); closing that gap is a deployment
+prerequisite with a verify-then-measure procedure (`PRODUCTION_RUNBOOK.md` §9),
+not a code change, and no latency claim is made until it is measured live.
+
 Staging deliberately does **not** share production's database. It is also not a
 full replica: see §6 before trusting it for schema work.
 

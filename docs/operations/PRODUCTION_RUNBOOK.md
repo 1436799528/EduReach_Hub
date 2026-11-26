@@ -256,13 +256,51 @@ Netlify is the production architecture (`docs/features/D5.md`).
 - functions `netlify/functions`, `external_node_modules = ["express", "serverless-http"]`
 - redirects and headers come from `netlify.toml` and `public/_headers`
 
-**Pass:** the deploy succeeds and `/` returns the application.
+**Green CI is not a deployment.** The steps below (and §3's migration order)
+are release prerequisites: passing the repository's checks proves the code is
+consistent, not that production has been migrated, relocated or measured.
+
+**Function region (deployment prerequisite).** The production audit found the
+API function deploying from `iad` (us-east-1) while `EduReach-V1` is `eu-west-1`
+(`docs/operations/ENVIRONMENTS.md` §1), so every database round trip the
+function makes crosses the Atlantic. The architecture requires the function
+region close to the database. A region change is only real after all three of
+these are checked, in order:
+
+1. **What region the site's functions actually deploy to** (site dashboard →
+   Functions; the audit found `iad`) and **whether this account can select a
+   functions region at all** — region selection is a Netlify platform/plan
+   feature; this repository does not set it anywhere (`netlify.toml` does not
+   select a region). If the account cannot select one, record the relocation
+   as an open follow-up instead of claiming it.
+2. **That a setting change actually relocates newly deployed functions** — a
+   region setting applies to functions built by later deploys and does not move
+   a deployment that already exists: change it, redeploy, then confirm the
+   deployed region changed.
+3. **That the database leg got shorter in reality** — the expected gain is on
+   the function → database path only (each Supabase query loses the
+   transatlantic round trip; the student → function path is not the claim).
+   No millisecond number is asserted anywhere in this repository until the
+   live measurement in §10 is done.
+
+**Pass:** the deploy succeeds, `/` returns the application, and the three
+region checks above have recorded answers.
 
 ## 10. Run smoke tests
 
 See the smoke-test plan below. Use **dedicated test accounts and synthetic data
 only** — no real student information, no publicly visible fake content, and nothing
 that contaminates analytics beyond the test session.
+
+**Live CBT resume/save check (required after a CBT release).** The release's
+latency numbers come from a local throttled harness (mocked API with a fixed
+300 ms per-response round trip, desktop Chromium, n=5 per metric), not from
+production. Against the production site, with a real account: start a timed
+session, save a few answers, refresh mid-session, and record the resume time
+and the save → acknowledged time from the browser's network panel; then
+confirm the answers survived the refresh and that the countdown follows the
+server deadline. Run this **after** the §3 migration and the §9 region checks,
+in that order, and record the measured numbers next to the harness numbers.
 
 **Pass:** every listed expectation holds.
 
