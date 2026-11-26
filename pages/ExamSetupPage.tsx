@@ -17,6 +17,7 @@ import { isSupabaseConfigured } from '../src/lib/supabase';
 import { fetchPostUtmeDirectory, type PostUtmeSchool } from '../src/lib/institutions/repository';
 import { userFacingError } from '../lib/errors';
 import { navigateInApp } from '../src/lib/navigation';
+import { readCbtRecoveryJournal, writeCbtRecoveryJournal } from '../src/lib/cbtRecoveryJournal';
 import './ExamSetupPage.css';
 import {
   DEFAULT_CBT_LIMITS,
@@ -480,6 +481,27 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
         programme: exam === 'post-utme' ? selectedPostUtmeInstitution?.name ?? null : null,
       });
       trackEvent('cbt_start', { metadata: { examId: targetExam.id, examTitle: targetExam.title, mode } });
+      // The hall can render from the paper the server just embedded — no
+      // fresh network wait — and revalidates in the background. Only a
+      // legacy-protocol paper is stashed; v2 sessions negotiate their own
+      // flow. Answers already in the recovery journal are never clobbered.
+      if (started.paper?.protocol?.version === 1 && user?.id) {
+        const accountId = user.id;
+        const attemptId = started.id;
+        const paper = started.paper;
+        void (async () => {
+          try {
+            const current = await readCbtRecoveryJournal(accountId, attemptId);
+            await writeCbtRecoveryJournal({ accountId, attemptId, revision: current?.revision ?? 0 }, {
+              paper: { attempt: paper.attempt, questions: paper.questions },
+              confirmedAnswers: paper.attempt.savedAnswers ?? {},
+              currentIndex: paper.attempt.questionIndex || 0,
+            });
+          } catch {
+            // The hall loads the paper itself.
+          }
+        })();
+      }
       const params = new URLSearchParams();
       if (started.resumed) params.set('resumed', '1');
       const query = params.toString();

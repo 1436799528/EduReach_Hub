@@ -21,6 +21,13 @@ import { classifyFailure } from '../src/lib/failures';
 import { navigateInApp } from '../src/lib/navigation';
 import { useCbtPageWriter } from '../src/lib/useCbtPageWriter';
 import { inspectCbtAnswerJournal, validateCbtJournalPaper } from '../src/lib/cbtAnswerQueue';
+import {
+  clearCbtRecoveryJournal,
+  readCbtRecoveryJournal,
+  writeCbtRecoveryJournal,
+  type CbtRecoveryRecord,
+} from '../src/lib/cbtRecoveryJournal';
+import { compareCbtDrafts, type CbtDifference } from '../src/lib/cbtReconciliation';
 import { CBT_UUID } from '../src/lib/cbtProtocolValidation';
 import './CbtSessionPage.css';
 
@@ -42,6 +49,9 @@ import './CbtSessionPage.css';
  */
 
 const PENDING_PREFIX = 'edureach-cbt-pending:';
+// Which account the browser copy belongs to, so one account's attempt data
+// never surfaces under another account on the same device.
+const PENDING_OWNER_PREFIX = 'edureach-cbt-pending-owner:';
 
 /** A11Y: subject tabs are one tab stop; arrows, Home and End move and activate. */
 function handleSubjectTabKeys(event: ReactKeyboardEvent<HTMLDivElement>) {
@@ -61,8 +71,10 @@ function handleSubjectTabKeys(event: ReactKeyboardEvent<HTMLDivElement>) {
   tabs[next].click();
 }
 
-function readPending(attemptId: string): Record<number, number> | null {
+function readPending(attemptId: string, accountId?: string | null): Record<number, number> | null {
   try {
+    const owner = localStorage.getItem(`${PENDING_OWNER_PREFIX}${attemptId}`);
+    if (owner && accountId && owner.toLowerCase() !== accountId.trim().toLowerCase()) return null;
     const raw = localStorage.getItem(`${PENDING_PREFIX}${attemptId}`);
     return raw ? JSON.parse(raw) as Record<number, number> : null;
   } catch {
@@ -70,10 +82,15 @@ function readPending(attemptId: string): Record<number, number> | null {
   }
 }
 
-function writePending(attemptId: string, answers: Record<number, number> | null) {
+function writePending(attemptId: string, answers: Record<number, number> | null, accountId?: string | null) {
   try {
-    if (answers) localStorage.setItem(`${PENDING_PREFIX}${attemptId}`, JSON.stringify(answers));
-    else localStorage.removeItem(`${PENDING_PREFIX}${attemptId}`);
+    if (answers) {
+      localStorage.setItem(`${PENDING_PREFIX}${attemptId}`, JSON.stringify(answers));
+      if (accountId) localStorage.setItem(`${PENDING_OWNER_PREFIX}${attemptId}`, accountId);
+    } else {
+      localStorage.removeItem(`${PENDING_PREFIX}${attemptId}`);
+      localStorage.removeItem(`${PENDING_OWNER_PREFIX}${attemptId}`);
+    }
   } catch {
     // localStorage may be disabled; the session still works in memory.
   }
@@ -87,6 +104,7 @@ function clearAcknowledgedPending(attemptId: string, snapshot: Record<number, nu
     if (stored === null) return true;
     if (stored !== JSON.stringify(snapshot)) return false;
     localStorage.removeItem(key);
+    localStorage.removeItem(`${PENDING_OWNER_PREFIX}${attemptId}`);
     return localStorage.getItem(key) === null;
   } catch { return false; }
 }
@@ -140,6 +158,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
   const [now, setNow] = useState(Date.now());
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [recoveryNotice, setRecoveryNotice] = useState('');
+  const [conflicts, setConflicts] = useState<CbtDifference[]>([]);
   const [actionError, setActionError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [closed, setClosed] = useState<'expired' | 'submitted' | 'cancelled' | null>(null);
@@ -152,11 +171,21 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const flushRetryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const flushAttempts = useRef(0);
+  const loadRetryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const loadAttempts = useRef(0);
   const autoSubmitRetryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const autoSubmitAttempts = useRef(0);
   const pendingAnswers = useRef<Record<number, number> | null>(null);
   const pendingIndex = useRef(0);
   const pendingVersion = useRef(0);
+  // Account-and-attempt recovery journal: written before any network sync and
+  // consulted before any network wait. See src/lib/cbtRecoveryJournal.ts.
+  const journalRevision = useRef(0);
+  const journalHydrated = useRef(false);
+  // When reconciliation ran, the network save payload is the server baseline
+  // plus this device's safe proposals — never a stale whole snapshot that
+  // could overwrite newer answers another tab or device saved.
+  const flushMerge = useRef<{ base: Record<number, number>; server: Record<number, number>; blocked: Set<string> } | null>(null);
   const saveInFlight = useRef(false);
   const autoSubmitStarted = useRef(false);
   const sessionActionInFlight = useRef(false);
@@ -171,13 +200,30 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
     if (offset !== null) setServerOffsetMs(offset);
   }, []);
 
+  /** Persist recovery state before any network sync; never a network gate. */
+  const journalWrite = useCallback((patch: Partial<Omit<CbtRecoveryRecord, 'key' | 'accountId' | 'attemptId'>>) => {
+    const accountId = currentAccount.current;
+    if (!accountId || !CBT_UUID.test(accountId) || !CBT_UUID.test(attemptId)) return;
+    void writeCbtRecoveryJournal({ accountId, attemptId, revision: journalRevision.current }, patch)
+      .then((record) => {
+        // A refused write returns the newer record; adopt its revision so the
+        // next write of this tab lands, without overwriting the newer state.
+        if (record) journalRevision.current = record.revision;
+      })
+      .catch(() => {
+        // Best-effort durability: localStorage remains the fallback copy.
+      });
+  }, [attemptId]);
+
   const load = useCallback(async () => {
     // Concurrent paper retries must not allow an older response to re-enable
     // legacy writes after a later response failed protocol negotiation.
     const generation = ++loadGeneration.current;
     legacyProtocol.current = false;
     if (saveTimer.current) clearTimeout(saveTimer.current);
-    setLoading(true);
+    // A restored local copy stays on screen while the server is consulted in
+    // the background — there is no blocking loader when local data exists.
+    if (!journalHydrated.current) setLoading(true);
     setLoadError(null);
     setV2Paper(null);
     setV2Owner(null);
@@ -211,27 +257,126 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
       resyncClock(payload.serverTime);
       setMarked(readFlags(attemptId) ?? {});
       // A pending draft is a whole snapshot, not a patch: merging would
-      // resurrect answers the student deliberately cleared. Its age relative
-      // to another tab/device or an in-flight request cannot be established.
-      const pending = readPending(attemptId);
-      setAnswers(pending ?? payload.attempt.savedAnswers ?? {});
-      if (pending) {
+      // resurrect answers the student deliberately cleared.
+      const accountId = currentAccount.current;
+      const pending = readPending(attemptId, accountId);
+      const record = accountId ? await readCbtRecoveryJournal(accountId, attemptId).catch(() => null) : null;
+      if (generation !== loadGeneration.current) return;
+      if (record) journalRevision.current = record.revision;
+      const serverDraft = payload.attempt.savedAnswers ?? {};
+      // The account-scoped journal supersedes the browser copy; the copy is
+      // the fallback when the journal has no record for this account.
+      const localDraft = record?.answers ?? pending ?? serverDraft;
+      if (record) {
+        try {
+          // Three-way reconciliation against the last server-acknowledged
+          // draft: local-only edits (including clears) replay as the student
+          // made them; competing edits are held for an explicit choice and
+          // never overwrite the server's newer answers.
+          const reconciliation = compareCbtDrafts(record.confirmedAnswers ?? null, localDraft, serverDraft);
+          setConflicts(reconciliation.conflicts);
+          flushMerge.current = {
+            base: record.confirmedAnswers ?? serverDraft,
+            server: serverDraft,
+            blocked: new Set(reconciliation.conflicts.map((item) => item.position)),
+          };
+        } catch {
+          // An unreadable copy is not trusted to overwrite anything.
+          setConflicts([]);
+          flushMerge.current = null;
+        }
+      } else {
+        setConflicts([]);
+        flushMerge.current = null;
+      }
+      setAnswers(localDraft);
+      if (pending || record?.pendingDraft) {
         setSaveState('pending');
         setRecoveryNotice('A browser copy was restored but is not confirmed saved. It may be older than work in another tab or device. Review your answers before submitting.');
+      }
+      journalWrite({
+        paper: { attempt: payload.attempt, questions: payload.questions },
+        answers: localDraft,
+        confirmedAnswers: serverDraft,
+        currentIndex: payload.attempt.questionIndex || 0,
+        pendingDraft: record?.pendingDraft ?? (pending ? { answers: pending, questionIndex: payload.attempt.questionIndex || 0, savedAt: Date.now() } : null),
+      });
+      if (pendingAnswers.current) {
+        // Work queued before the protocol was confirmed now has its gate open.
+        void flush();
+      } else if (record?.pendingDraft || pending) {
+        // Restored unconfirmed work becomes live pending work: it syncs on the
+        // next connection return, on leaving the tab, or on the student's next
+        // action — guarded by the merge above so it can never overwrite newer
+        // saved answers. It is not replayed behind the student's back here,
+        // because it is still explicitly identified as unconfirmed.
+        pendingAnswers.current = localDraft;
+        pendingIndex.current = payload.attempt.questionIndex || 0;
       }
       setIndex(Math.max(0, Math.min(payload.attempt.questionIndex || 0, Math.max(0, payload.questions.length - 1))));
       if (payload.attempt.status !== 'in_progress') setClosed(payload.attempt.status);
     } catch (error) {
-      if (generation === loadGeneration.current) setLoadError(error);
+      if (generation !== loadGeneration.current) return;
+      if (journalHydrated.current) {
+        // The local copy is already on screen: say so honestly and retry with
+        // bounded backoff instead of replacing the paper with an error screen.
+        setSaveState('pending');
+        setRecoveryNotice('The server could not be reached. Showing the copy saved on this device; your work is kept here and will sync when the connection returns.');
+        const retryAttempt = loadAttempts.current + 1;
+        if (retryAttempt < DEFAULT_WRITE_BACKOFF.maxAttempts) {
+          loadAttempts.current = retryAttempt;
+          if (loadRetryTimer.current) clearTimeout(loadRetryTimer.current);
+          loadRetryTimer.current = setTimeout(() => {
+            loadRetryTimer.current = null;
+            void load();
+          }, backoffDelayMs(retryAttempt, DEFAULT_WRITE_BACKOFF));
+        }
+      } else {
+        setLoadError(error);
+      }
     } finally {
       if (generation === loadGeneration.current) setLoading(false);
     }
-  }, [attemptId, resyncClock]);
+  }, [attemptId, journalWrite, resyncClock]);
 
   useEffect(() => {
-    void load();
-    return () => { loadGeneration.current++; legacyProtocol.current = false; };
-  }, [load]);
+    // Restore locally first, reconcile in the background: when this account
+    // has a recovery journal for this attempt, the paper and answers render
+    // from this device without waiting for the network. load() then confirms
+    // protocol, status and deadline with the server and reconciles.
+    let cancelled = false;
+    void (async () => {
+      const accountId = currentAccount.current;
+      if (accountId && CBT_UUID.test(accountId) && CBT_UUID.test(attemptId)) {
+        const record = await readCbtRecoveryJournal(accountId, attemptId).catch(() => null);
+        if (cancelled) return;
+        if (record?.paper) {
+          journalRevision.current = record.revision;
+          journalHydrated.current = true;
+          const paper = record.paper as { attempt: CbtAttemptPayload; questions: CbtQuestionPayload[] };
+          if (Array.isArray(paper.questions) && paper.questions.length > 0 && paper.attempt && typeof paper.attempt === 'object') {
+            setAttempt(paper.attempt);
+            setQuestions(paper.questions);
+            setAnswers(record.answers);
+            setMarked(readFlags(attemptId) ?? {});
+            setIndex(Math.max(0, Math.min(record.currentIndex, Math.max(0, paper.questions.length - 1))));
+            setLoading(false);
+            if (paper.attempt.status !== 'in_progress') setClosed(paper.attempt.status);
+            if (record.pendingDraft) {
+              setSaveState('pending');
+              setRecoveryNotice('A browser copy was restored but is not confirmed saved. It may be older than work in another tab or device. Review your answers before submitting.');
+            }
+          }
+        }
+      }
+      if (!cancelled) void load();
+    })();
+    return () => {
+      cancelled = true;
+      loadGeneration.current++;
+      legacyProtocol.current = false;
+    };
+  }, [attemptId, load]);
 
   useEffect(() => {
     document.body.classList.add('er-exam-mode');
@@ -314,16 +459,40 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
     const snapshot = pendingAnswers.current;
     const snapshotIndex = pendingIndex.current;
     const version = pendingVersion.current;
+    // The wire payload is this device's intent, but a position held for an
+    // explicit conflict keeps the server's value: a stale whole snapshot can
+    // never overwrite answers a newer tab or device saved.
+    const merge = flushMerge.current;
+    let payload = snapshot;
+    if (merge) {
+      // The wire payload is the server baseline plus this device's proposals
+      // (positions where the student actually changed something since the
+      // last acknowledged save — including deliberate clears). A position
+      // held for an explicit conflict, and a position this device never
+      // changed, keeps the server's value: a stale snapshot can never
+      // overwrite answers a newer tab or device saved.
+      payload = {};
+      for (const key of new Set([...Object.keys(merge.server), ...Object.keys(snapshot), ...Object.keys(merge.base)])) {
+        const position = Number(key);
+        const localValue = snapshot[position];
+        const isProposal = localValue !== merge.base[position];
+        const value = merge.blocked.has(key) || !isProposal ? merge.server[position] : localValue;
+        if (value !== undefined) payload[position] = value;
+      }
+    }
     saveInFlight.current = true;
     setSaveState('saving');
     let succeeded = false;
     try {
-      const ack = await saveConfiguredCbtDraft(attemptId, snapshot, snapshotIndex);
+      const ack = await saveConfiguredCbtDraft(attemptId, payload, snapshotIndex);
       succeeded = true;
       flushAttempts.current = 0;
       // Every acknowledged save resynchronises the countdown offset with the
       // server clock, so a drifting device cannot distort the deadline.
       resyncClock(ack?.serverTime);
+      const confirmed = ack?.answers ?? payload;
+      if (merge) flushMerge.current = { server: confirmed, base: confirmed, blocked: merge.blocked };
+      journalWrite({ confirmedAnswers: confirmed, pendingDraft: null });
       // An old response is not permission to clear pending work after a new
       // paper load or an unmount changed the active protocol.
       if (legacyProtocol.current && generation === loadGeneration.current && version === pendingVersion.current) {
@@ -356,7 +525,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
         }
       } else if (failure.kind === 'auth') {
         setSaveState('error');
-        setActionError('Your session ended. Sign in again in this tab to keep saving. Your answers may be lost if you leave this page.');
+        setActionError('Your session ended. Your answers are kept on this device. Sign in again to resume this same attempt.');
       } else if (failure.kind === 'forbidden') {
         setSaveState('error');
         setActionError('Your account cannot save this attempt. Keep this page open and contact EduReach if you think this is a mistake.');
@@ -368,24 +537,29 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
       // Never spin on an error or assume a timed-out request did not commit.
       if (succeeded && pendingAnswers.current && version !== pendingVersion.current) void drain();
     }
-  }, [attemptId, resyncClock]);
+  }, [attemptId, journalWrite, resyncClock]);
 
   const queueSave = useCallback((nextAnswers: Record<number, number>, nextIndex: number, immediate = false) => {
-    if (!legacyProtocol.current) return;
+    // Local tracking happens before and regardless of network sync (the
+    // recovery journal holds it), but the network flush stays behind the
+    // protocol fence in flush().
+    if (!legacyProtocol.current && !journalHydrated.current) return;
     pendingAnswers.current = nextAnswers;
     pendingIndex.current = nextIndex;
     pendingVersion.current += 1;
-    writePending(attemptId, nextAnswers);
+    writePending(attemptId, nextAnswers, currentAccount.current);
+    journalWrite({ answers: nextAnswers, currentIndex: nextIndex, pendingDraft: { answers: nextAnswers, questionIndex: nextIndex, savedAt: Date.now() } });
     setSaveState('pending');
     if (saveTimer.current) clearTimeout(saveTimer.current);
     if (immediate) void flush();
     else saveTimer.current = setTimeout(() => { void flush(); }, 900);
-  }, [attemptId, flush]);
+  }, [attemptId, flush, journalWrite]);
 
   useEffect(
     () => () => {
       if (saveTimer.current) clearTimeout(saveTimer.current);
       if (flushRetryTimer.current) clearTimeout(flushRetryTimer.current);
+      if (loadRetryTimer.current) clearTimeout(loadRetryTimer.current);
       if (autoSubmitRetryTimer.current) clearTimeout(autoSubmitRetryTimer.current);
     },
     [],
@@ -396,10 +570,18 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
       // Connectivity returned: retry pending work immediately (a backoff may be
       // pending; it is superseded by this attempt, which resets the budget).
       flushAttempts.current = 0;
+      loadAttempts.current = 0;
       if (flushRetryTimer.current) {
         clearTimeout(flushRetryTimer.current);
         flushRetryTimer.current = null;
       }
+      if (loadRetryTimer.current) {
+        clearTimeout(loadRetryTimer.current);
+        loadRetryTimer.current = null;
+      }
+      // A hall restored from local data reconciles with the server the moment
+      // the connection returns.
+      if (journalHydrated.current && !legacyProtocol.current) void load();
       if (pendingAnswers.current) void flush();
       // A deadline submission that could not be confirmed retries immediately
       // when the connection returns (idempotent server flow; the in-flight
@@ -408,7 +590,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
     };
     window.addEventListener('online', retry);
     return () => window.removeEventListener('online', retry);
-  }, [flush]);
+  }, [flush, load]);
 
   useEffect(() => {
     const onHide = () => { if (pendingAnswers.current) void flush(); };
@@ -455,7 +637,13 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
         setActionError(outcome.message);
         return;
       }
+      journalWrite({ pendingSubmission: true });
       await submitConfiguredCbt(attempt.id, answers);
+      // The server confirmed the submission and the result is stored (inside
+      // submitConfiguredCbt): only now is the recovery data cleared.
+      const doneAccountId = currentAccount.current;
+      if (doneAccountId) void clearCbtRecoveryJournal(doneAccountId, attempt.id);
+      writePending(attempt.id, null);
       // AN-1: attempt completion is the denominator for cbt_start. Only a
       // submission the server accepted is counted, so a failed or expired
       // attempt never inflates the funnel.
@@ -484,7 +672,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
       sessionActionInFlight.current = false;
       setSubmitting(false);
     }
-  }, [answers, attempt, closed, submitting, v2Paper, writer]);
+  }, [answers, attempt, closed, journalWrite, submitting, v2Paper, writer]);
 
   // Retries of an unconfirmed submission go through refs so the newest closure
   // (with the latest answers and state) is always the one that runs.
@@ -528,8 +716,13 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
     setSubmitting(true);
     setActionError('');
     try {
-      if (pendingAnswers.current) writePending(attemptId, pendingAnswers.current);
+      if (pendingAnswers.current) writePending(attemptId, pendingAnswers.current, currentAccount.current);
       await abandonConfiguredCbt(attemptId);
+      // The server confirmed the closure; the recovery data has served its
+      // purpose and goes only now.
+      const doneAccountId = currentAccount.current;
+      if (doneAccountId) void clearCbtRecoveryJournal(doneAccountId, attemptId);
+      writePending(attemptId, null);
       setClosed('cancelled');
       navigateInApp(attempt?.mode === 'practice' ? '/cbt?ended=practice' : '/cbt?ended=mock', { replace: true });
     } catch (error) {
@@ -538,7 +731,41 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
       sessionActionInFlight.current = false;
       setSubmitting(false);
     }
-  }, [attempt?.mode, attemptId]);
+  }, [attempt?.mode, attemptId, journalWrite]);
+
+  /** A conflicted position resolved by an explicit click: this device's value stands. */
+  const resolveConflict = useCallback((position: string) => {
+    setConflicts((current) => current.filter((item) => item.position !== position));
+    if (flushMerge.current) {
+      const blocked = new Set([...flushMerge.current.blocked].filter((item) => item !== position));
+      flushMerge.current = { server: flushMerge.current.server, base: flushMerge.current.base, blocked };
+    }
+  }, []);
+
+  /** Explicit bulk choice: keep every answer made on this device and save it. */
+  const resolveConflictsKeepDevice = useCallback(() => {
+    setConflicts([]);
+    if (flushMerge.current) flushMerge.current = { server: flushMerge.current.server, base: flushMerge.current.base, blocked: new Set() };
+    queueSave(answers, index);
+  }, [answers, index, queueSave]);
+
+  /** Explicit bulk choice: use the answers saved to the account; device values stand down. */
+  const resolveConflictsUseSaved = useCallback(() => {
+    const merge = flushMerge.current;
+    setConflicts([]);
+    if (!merge) return;
+    flushMerge.current = { server: merge.server, base: merge.base, blocked: new Set() };
+    const next = { ...answers };
+    for (const item of conflicts) {
+      const key = Number(item.position);
+      const saved = merge.server[key];
+      if (saved === undefined) delete next[key];
+      else next[key] = saved;
+    }
+    setAnswers(next);
+    // Any other unconfirmed intent is re-queued as one explicit snapshot.
+    queueSave(next, index);
+  }, [answers, conflicts, index, queueSave]);
 
   const choose = useCallback((optionIndex: number) => {
     if (closed) return;
@@ -548,25 +775,31 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
       }
       return;
     }
-    if (!legacyProtocol.current) return;
+    if (!legacyProtocol.current && !journalHydrated.current) return;
+    // An explicit click on a conflicted question is the student's explicit
+    // choice: that position stops being held and this device's value stands.
+    const position = String(questions[index]?.position ?? '');
+    if (position && conflicts.some((item) => item.position === position)) resolveConflict(position);
     setAnswers((current) => {
       const next = { ...current, [questions[index].position]: optionIndex };
       queueSave(next, index);
       return next;
     });
-  }, [closed, index, questions, queueSave, remainingSeconds, timed, v2Paper, writer]);
+  }, [closed, conflicts, index, questions, queueSave, remainingSeconds, resolveConflict, timed, v2Paper, writer]);
 
   const clearAnswer = useCallback(() => {
     if (closed) return;
     if (v2Paper) { if ((!timed || remainingSeconds > 0) && questions[index]) void writer.choose(questions[index], null); return; }
-    if (!legacyProtocol.current) return;
+    if (!legacyProtocol.current && !journalHydrated.current) return;
+    const position = String(questions[index]?.position ?? '');
+    if (position && conflicts.some((item) => item.position === position)) resolveConflict(position);
     setAnswers((current) => {
       const next = { ...current };
       delete next[questions[index].position];
       queueSave(next, index);
       return next;
     });
-  }, [closed, index, questions, queueSave, remainingSeconds, timed, v2Paper, writer]);
+  }, [closed, conflicts, index, questions, queueSave, remainingSeconds, resolveConflict, timed, v2Paper, writer]);
 
   const goTo = useCallback((nextIndex: number) => {
     if (nextIndex < 0 || nextIndex >= questions.length) return;
@@ -777,6 +1010,18 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
 
       <main className="er-exam-main">
         {recoveryNotice && !v2Paper && <p className="hub-form-error" role="note">{recoveryNotice}</p>}
+        {conflicts.length > 0 && !v2Paper && (
+          <div className="hub-form-error" role="note">
+            <p>
+              {conflicts.length === 1 ? 'Question' : 'Questions'} {conflicts.map((item) => item.position).join(', ')}{' '}
+              {conflicts.length === 1 ? 'has' : 'have'} two different answers on this device and in your saved account answers. Re-select an answer on each question to confirm it, or choose which answers to keep before submitting.
+            </p>
+            <p>
+              <button type="button" className="hub-outline-btn" onClick={resolveConflictsKeepDevice}>Keep this device&apos;s answers</button>{' '}
+              <button type="button" className="hub-outline-btn" onClick={resolveConflictsUseSaved}>Use the saved account answers</button>
+            </p>
+          </div>
+        )}
         {v2Paper && <section aria-label="Writing session and recovery" className="hub-form-error">
           <p role="status">{writer.phase === 'loading' ? 'Confirming writing session…' : writer.phase === 'active' ? 'Writing session confirmed by the server.' : 'Writing is paused.'} {writer.message}</p>
           <p>Submit when the writing session is confirmed and every answer is saved. Ending this attempt without submitting is unavailable. Work on another disconnected device cannot be discovered here.</p>
