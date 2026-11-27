@@ -32,7 +32,7 @@ test('a restored cleared answer stays cleared and is identified as unconfirmed',
   if (await consent.isVisible()) await consent.click();
   await expect(page.getByRole('radio', { name: /Option one/ })).toHaveAttribute('aria-checked', 'false');
   await expect(page.getByRole('status').filter({ hasText: 'not yet saved' })).toBeVisible();
-  await expect(page.getByText(/browser copy.*another tab or device/i)).toBeVisible();
+  await expect(page.getByText(/restored on this device.*another tab or device/i)).toBeVisible();
   await page.waitForTimeout(1300);
   expect(writes).toBe(0);
   await page.getByRole('button', { name: 'Submit Examination' }).first().click();

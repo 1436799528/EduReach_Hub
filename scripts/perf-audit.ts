@@ -141,7 +141,13 @@ export const BUDGETS = {
   // chunks. Raised 402 -> 432 KB; no first-load number depends on it, and the
   // dedicated critical-path cap above still fails if lazy code leaks into the
   // first load.
-  totalJsGzip: 432 * 1024,
+  // The CBT reliability release (server-deadline countdown, account-scoped
+  // recovery journal with restore-first resume, answer reconciliation and the
+  // paper-bundle start) measured 434.4 KB: +2.4 KB, all inside the lazy CBT
+  // route chunks. Raised 432 -> 438 KB, the measured amount plus the usual
+  // headroom so the gate stays reviewable; the critical-path cap above is
+  // unchanged and still catches anything that leaks into the first load.
+  totalJsGzip: 438 * 1024,
   // Measured 49.4 KB before UI-4 and 50.2 KB after it. The interaction-state
   // pass (secondary, disabled, busy, field, navigation and status rules) is
   // +0.8 KB gzip, and at 50 KB the gate would have failed on the change that

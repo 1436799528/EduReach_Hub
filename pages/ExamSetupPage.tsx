@@ -17,6 +17,7 @@ import { isSupabaseConfigured } from '../src/lib/supabase';
 import { fetchPostUtmeDirectory, type PostUtmeSchool } from '../src/lib/institutions/repository';
 import { userFacingError } from '../lib/errors';
 import { navigateInApp } from '../src/lib/navigation';
+import { readCbtRecoveryJournal, writeCbtRecoveryJournal } from '../src/lib/cbtRecoveryJournal';
 import './ExamSetupPage.css';
 import {
   DEFAULT_CBT_LIMITS,
@@ -480,6 +481,27 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
         programme: exam === 'post-utme' ? selectedPostUtmeInstitution?.name ?? null : null,
       });
       trackEvent('cbt_start', { metadata: { examId: targetExam.id, examTitle: targetExam.title, mode } });
+      // The hall can render from the paper the server just embedded — no
+      // fresh network wait — and revalidates in the background. Only a
+      // legacy-protocol paper is stashed; v2 sessions negotiate their own
+      // flow. Answers already in the recovery journal are never clobbered.
+      if (started.paper?.protocol?.version === 1 && user?.id) {
+        const accountId = user.id;
+        const attemptId = started.id;
+        const paper = started.paper;
+        void (async () => {
+          try {
+            const current = await readCbtRecoveryJournal(accountId, attemptId);
+            await writeCbtRecoveryJournal({ accountId, attemptId, revision: current?.revision ?? 0 }, {
+              paper: { attempt: paper.attempt, questions: paper.questions },
+              confirmedAnswers: paper.attempt.savedAnswers ?? {},
+              currentIndex: paper.attempt.questionIndex || 0,
+            });
+          } catch {
+            // The hall loads the paper itself.
+          }
+        })();
+      }
       const params = new URLSearchParams();
       if (started.resumed) params.set('resumed', '1');
       const query = params.toString();
@@ -596,7 +618,7 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
 
           {targetExam && bank && exam === 'waec' && (
             <InlineNotice tone="warning" title="WAEC practice format: objective questions only">
-              This EduReach bank currently supports four-option multiple-choice questions. WASSCE paper types and timings vary by subject, and some papers require written, practical or oral responses. Do not treat this session as a full WASSCE simulation or as official past questions unless the individual items have verified sources.
+              Objective (multiple-choice) questions only. Real WASSCE papers also include written, practical and oral sections, so this is not a full WASSCE simulation.
               {bank.exam.officialGuidanceUrl ? <> Official guidance: <a href={bank.exam.officialGuidanceUrl} target="_blank" rel="noreferrer">view source</a>.</> : null}
               {bank.exam.formatNotes ? <> Editorial note: {bank.exam.formatNotes}</> : null}
             </InlineNotice>
@@ -714,8 +736,8 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                       </div>
                       <p className="er-setup-field-note er-setup-slot-note">
                         {slotsLeft > 0
-                          ? `${slotsLeft} optional subject slot${slotsLeft === 1 ? '' : 's'} left in this paper.`
-                          : 'All subject slots are used. Remove an optional subject to choose a replacement.'}
+                          ? `${slotsLeft} optional subject slot${slotsLeft === 1 ? '' : 's'} left.`
+                          : 'All subject slots are used.'}
                       </p>
                       <div className="er-setup-full-width" role="group" aria-label="Available subjects">
                         <label className="er-setup-label" htmlFor={exam === 'jamb' ? 'er-jamb-subject' : 'er-optional-subject'}>
@@ -784,7 +806,7 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                         </InlineNotice>
                       )}
                       <p className="er-setup-field-note" id="cbt-subject-help">
-                        <Info size={14} /> {exam === 'jamb' ? 'Choose optional subjects from the selected group. Subjects without questions in this bank are unavailable. JAMB is limited to four subjects including compulsory Use of English.' : 'Only subjects with questions are listed.'}
+                        <Info size={14} /> Optional subjects come from the selected group. Only subjects with questions are listed.
                         {compulsoryEnglish ? ` ${compulsoryEnglish} is compulsory for this examination and cannot be removed.` : ''}
                       </p>
                       {formError && (
@@ -819,7 +841,7 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                         <span className="er-setup-duration-option is-selected"><Clock3 size={14} /> {effectiveDuration} minutes for {effectiveCount} questions</span>
                       </div>
                       <p className="er-setup-field-note">
-                        <Clock3 size={14} /> Time is calculated automatically from the question count and the exam's standard duration. The countdown cannot be extended once the test starts.
+                        <Clock3 size={14} /> Time follows the exam's standard pace for this question count. The countdown cannot be extended once the test starts.
                       </p>
                     </div>
                     </>}
@@ -837,15 +859,15 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                   <p className="er-setup-field-note">
                     <ShieldCheck size={14} /> {mode === 'mock'
                       ? (mockPaper
-                        ? `The mock reproduces the examination paper: ${mockPaper.questions} questions in ${mockDurationMinutes(bank?.exam.defaultDurationMinutes, examBody)} minutes, timed from the moment you press Start mock.`
-                        : 'The paper is filled from your chosen subjects, up to the session limit, and runs for the examination\'s configured time. The timer starts the moment you press Start mock.')
-                      : 'Your test timer continues after you leave. If you return before it expires, check which answers were saved.'}
+                        ? `Timed mock: ${mockPaper.questions} questions in ${mockDurationMinutes(bank?.exam.defaultDurationMinutes, examBody)} minutes. The clock starts when you press Start mock.`
+                        : 'The paper draws from your chosen subjects up to the session limit and runs for the exam\'s configured time. The clock starts when you press Start mock.')
+                      : 'The clock keeps running if you leave. Return before it ends — your answers are restored on this device.'}
                   </p>
                 </div>
 
                 {!user && (
                   <InlineNotice tone="info" title="You need an account to sit a paper">
-                    Practice and mock sessions require an account. A connection interruption can affect saving, so check your answers if you return. <a href={`/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`}>Sign in</a> or register, then return to set up your test.
+                    Practice and mock sessions require an account, so your answers can be saved and recovered. <a href={`/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`}>Sign in</a> or register, then return here.
                   </InlineNotice>
                 )}
 
@@ -881,7 +903,7 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                 </div>
                 {startPhase === 'stalled' && (
                   <p className="er-setup-field-note" role="status">
-                    The server is still preparing this paper. Keep this page open — the countdown only starts once it does.
+                    Still preparing your paper. Keep this page open — the countdown starts when it is ready.
                     If nothing happens, <a href="/cbt">go back to the CBT Centre</a> and try again.
                   </p>
                 )}

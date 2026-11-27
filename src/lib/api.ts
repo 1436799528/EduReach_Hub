@@ -1716,6 +1716,12 @@ export async function fetchCbtSubjectCatalog(examBody: string): Promise<CbtSubje
   return (data || []) as CbtSubjectCatalogEntry[];
 }
 
+export type CbtStartPaper = {
+  attempt: CbtAttemptPayload;
+  questions: CbtQuestionPayload[];
+  serverTime: string;
+  protocol: CbtSessionProtocol;
+};
 export type CbtConfiguredStart = {
   id: string;
   startedAt: string;
@@ -1726,6 +1732,8 @@ export type CbtConfiguredStart = {
   subjects: string[];
   plan: Array<{ subject: string; questions: number; first: number; last: number }>;
   resumed: boolean;
+  /** The frozen paper, when the server could embed it: render without a network wait. */
+  paper?: CbtStartPaper;
 };
 
 export async function fetchCbtBank(examId: string): Promise<CbtBankPayload> {
@@ -1749,7 +1757,7 @@ export async function startConfiguredCbt(payload: {
 }): Promise<CbtConfiguredStart> {
   const headers = await authHeaders();
   if (!headers.Authorization) throw new Error('Please sign in to start this practice session.');
-  const body = await jsonFetch<{ attempt: CbtConfiguredStart }>(`/api/cbt/exams/${encodeURIComponent(payload.examId)}/attempts`, {
+  const body = await jsonFetch<{ attempt: CbtConfiguredStart; paper?: CbtStartPaper }>(`/api/cbt/exams/${encodeURIComponent(payload.examId)}/attempts`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...headers },
     body: JSON.stringify({
@@ -1760,7 +1768,7 @@ export async function startConfiguredCbt(payload: {
       programme: payload.programme ?? null,
     }),
   });
-  return body.attempt;
+  return { ...body.attempt, paper: body.paper };
 }
 
 export type CbtSessionProtocol = { version: 1 } | { version: 2; scope: 'local-rehearsal' };
@@ -1855,14 +1863,38 @@ export async function sendCbtV2Operation(attemptId: string, kind: 'answer' | 'fi
   return data;
 }
 
-export async function saveConfiguredCbtDraft(attemptId: string, answers: Record<number, number>, questionIndex?: number): Promise<void> {
+export type CbtDraftSaveAck = {
+  saved?: boolean;
+  serverTime?: string;
+  /** The cleaned draft the server stored: the reconciliation base. */
+  answers?: Record<number, number>;
+  questionIndex?: number;
+  expiresAt?: string | null;
+};
+
+/**
+ * The server clock, for resynchronising the countdown offset when a page
+ * resumes. Never throws: an unreachable server leaves the current offset in
+ * place rather than disturbing the deadline.
+ */
+export async function fetchServerClock(): Promise<string | null> {
+  try {
+    const body = await jsonFetch<{ time?: string }>('/api/health');
+    return typeof body?.time === 'string' ? body.time : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function saveConfiguredCbtDraft(attemptId: string, answers: Record<number, number>, questionIndex?: number): Promise<CbtDraftSaveAck> {
   const headers = await authHeaders();
   if (!headers.Authorization) throw new EduReachError('Please sign in to save this session.', 'auth', 401);
-  await jsonFetch(`/api/cbt/attempts/${encodeURIComponent(attemptId)}/draft`, {
+  const body = await jsonFetch<CbtDraftSaveAck>(`/api/cbt/attempts/${encodeURIComponent(attemptId)}/draft`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json', ...headers },
     body: JSON.stringify({ answers, questionIndex }),
   });
+  return body ?? {};
 }
 
 export async function submitConfiguredCbt(attemptId: string, answers: Record<number, number>): Promise<CbtSubmitResponse> {

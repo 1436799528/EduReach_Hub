@@ -16,7 +16,7 @@
  * `null` in the model, and `null` renders as "not published yet".
  */
 
-import { aliasNamesFor, identityAliasFor } from './aliases';
+import { aliasNamesFor, identityAliasFor, verifiedSearchAliasesFor } from './aliases';
 import {
   institutionSlug,
   isInstitutionId,
@@ -117,18 +117,33 @@ export function mapDirectoryRow(row: InstitutionRow): InstitutionSummary | null 
 /**
  * Search aliases for a directory row.
  *
- * The directory has no alias table, so the only aliases available are the
- * institution's own acronym and any name recorded by the identity
- * reconciliation layer (for example the second University of Calabar row).
+ * The directory has no alias table, so the aliases available are the
+ * institution's own acronym, any name recorded by the identity reconciliation
+ * layer (for example the second University of Calabar row), and the verified
+ * search aliases sourced from the NUC registry record and the institution's
+ * own official website (see `verifiedSearchAliasesFor`).
  */
 export function mapAliases(row: InstitutionRow, name: string): InstitutionAlias[] {
   const aliases: InstitutionAlias[] = [];
+  const seen = new Set<string>([name.toLowerCase()]);
   const acronym = normalizeText(row.acronym);
-  if (acronym) {
+  if (acronym && !seen.has(acronym.toLowerCase())) {
+    seen.add(acronym.toLowerCase());
     aliases.push({ name: acronym, type: 'acronym', preferredDisplay: false, status: 'unresearched' });
   }
+  for (const alias of verifiedSearchAliasesFor(normalizeText(row.id) ?? '')) {
+    if (seen.has(alias.name.toLowerCase())) continue;
+    seen.add(alias.name.toLowerCase());
+    aliases.push({
+      name: alias.name,
+      type: alias.type,
+      preferredDisplay: false,
+      status: 'verified',
+    });
+  }
   for (const aliasName of aliasNamesFor(normalizeText(row.id) ?? '')) {
-    if (aliasName.toLowerCase() === name.toLowerCase()) continue;
+    if (seen.has(aliasName.toLowerCase())) continue;
+    seen.add(aliasName.toLowerCase());
     aliases.push({
       name: aliasName,
       type: 'alternate_name',

@@ -1,5 +1,5 @@
-const CACHE_NAME = 'edureach-shell-v6';
-const DYNAMIC_CACHE = 'edureach-dynamic-v6';
+const CACHE_NAME = 'edureach-shell-v7';
+const DYNAMIC_CACHE = 'edureach-dynamic-v7';
 const STATIC_ASSETS = ['/manifest.json', '/favicon.svg'];
 
 self.addEventListener('install', (event) => {
@@ -53,7 +53,26 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  if (url.pathname.startsWith('/assets/')) return;
+  if (url.pathname.startsWith('/assets/')) {
+    // Versioned build output: Vite changes the file name whenever the content
+    // changes, so a cached copy can never go stale — safe to keep for offline
+    // reopen. This cache holds only the public app bundles: never API
+    // responses, answer keys, authentication material or student data (the
+    // guards above and below keep those out of every shared cache).
+    event.respondWith(
+      caches.match(request).then((cached) => {
+        if (cached) return cached;
+        return fetch(request).then((response) => {
+          if (response.ok && response.type === 'basic') {
+            const copy = response.clone();
+            event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.put(request, copy)));
+          }
+          return response;
+        });
+      }),
+    );
+    return;
+  }
 
   const isStableAsset =
     url.pathname.startsWith('/icons/') ||

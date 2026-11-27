@@ -267,7 +267,8 @@ with repo_migrations(version, name, filename, kind) as (
     ('20261122120000', 'editorial_lifecycle_reviews_admin_rpcs', '20261122120000_editorial_lifecycle_reviews_admin_rpcs.sql', 'unique'),
     ('20261122121000', 'seed_verified_scholarships', '20261122121000_seed_verified_scholarships.sql', 'unique'),
     ('20261123120000', 'homepage_engagement', '20261123120000_homepage_engagement.sql', 'unique'),
-    ('20261123150000', 'security_boundary_hardening', '20261123150000_security_boundary_hardening.sql', 'unique')
+    ('20261123150000', 'security_boundary_hardening', '20261123150000_security_boundary_hardening.sql', 'unique'),
+    ('20261124120000', 'cbt_deadline_backfill', '20261124120000_cbt_deadline_backfill.sql', 'unique')
 -- END GENERATED MIGRATION CHECKLIST
 ),
 normalized as (
@@ -394,6 +395,7 @@ with expected(version, migration) as (
     ,('20261122121000', '20261122121000_seed_verified_scholarships.sql')
     ,('20261123120000', '20261123120000_homepage_engagement.sql')
     ,('20261123150000', '20261123150000_security_boundary_hardening.sql')
+    ,('20261124120000', '20261124120000_cbt_deadline_backfill.sql')
 ), missing_versions as (
   select 'migration ' || e.version as object, e.migration
   from expected e

@@ -78,6 +78,60 @@ export function canonicalInstitutionId(id: string): string {
   return ID_TO_CANONICAL.get(id.trim().toLowerCase()) ?? id;
 }
 
+/**
+ * Verified search aliases for a canonical directory row.
+ *
+ * The NUC registry (data/institutions/nuc-registry-2026-11-17.json) and the
+ * institution's own official site publish names a student may type that the
+ * production `school_name` does not carry. These entries are sourced name
+ * variants only — they never rename the directory row, never create a second
+ * institution, and every name is traceable to the registry record or the
+ * institution's official website (see `source`).
+ *
+ * The first entry: the University of Abuja (UniAbuja) sits at Gwagwalada; the
+ * registry lists it as “University of Abuja, Gwagwalada” while the production
+ * directory row is “University of Abuja, Abuja” (reconciled in
+ * data/institutions/registry-coverage.json as `curated_alias`). Gwagwalada is
+ * the campus location, not a separate state university.
+ */
+export interface VerifiedSearchAlias {
+  name: string;
+  type: 'acronym' | 'alternate_name' | 'official_variant';
+  /** Where this spelling is published, so an alias can be audited. */
+  source: string;
+}
+
+export const VERIFIED_SEARCH_ALIASES: Readonly<Record<string, readonly VerifiedSearchAlias[]>> = {
+  // University of Abuja — production row "University of Abuja, Abuja".
+  '9b164365-d366-4ff7-a432-b6713a89cea0': [
+    {
+      name: 'University of Abuja',
+      type: 'official_variant',
+      source: 'NUC registry 2026-11-17 (federal row 27) and https://www.uniabuja.edu.ng',
+    },
+    {
+      name: 'University of Abuja, Gwagwalada',
+      type: 'official_variant',
+      source: 'NUC registry 2026-11-17 (federal row 27, “University of Abuja, Gwagwalada”)',
+    },
+    {
+      name: 'UniAbuja',
+      type: 'acronym',
+      source: 'https://www.uniabuja.edu.ng',
+    },
+    {
+      name: 'Gwagwalada',
+      type: 'alternate_name',
+      source: 'NUC registry 2026-11-17 (federal row 27) — Gwagwalada is this university’s campus location',
+    },
+  ],
+};
+
+/** Verified search aliases recorded for a canonical id, or an empty list. */
+export function verifiedSearchAliasesFor(id: string): readonly VerifiedSearchAlias[] {
+  return VERIFIED_SEARCH_ALIASES[id.trim().toLowerCase()] ?? [];
+}
+
 /** The canonical id for a slug, when the slug is a recorded legacy alias. */
 export function canonicalIdForSlug(slug: string): string | null {
   return SLUG_TO_CANONICAL.get(institutionSlug(slug)) ?? null;

@@ -41,7 +41,7 @@ site will not start correctly; do not continue.
 
 For this CBT release, follow the target-specific hard prerequisite and detailed catalog/ledger, backup, deployment and rollback checks in [CBT migration-first release procedure](CBT_MIGRATION_FIRST_RELEASE.md). The application cannot load legacy papers safely on a pre-protocol database, and neither Netlify nor the readiness endpoint enforces migration order. Resolve merge-triggered deployment before merge.
 
-The local release candidate contains 101 migrations in `supabase/migrations/`, including the security-boundary hardening migration (`20261123150000`: grants-only — it revokes anonymous execution on three `SECURITY DEFINER`/trigger functions and pins the `search_path` of two helpers, with no table, policy or data change), the homepage-engagement migration (`20261123120000`: editable review fields, placeholder samples, database-backed FAQ categories and questions, and the social/contact settings seed), the editorial-lifecycle/reviews/admin-RPC migration (`20261122120000`: opportunity lifecycle columns, the moderated review table and summary function, the role-change function and the question-bank summary) and the verified-scholarship seed (`20261122121000`), the CBT notification partial unique index (`20261121150000_cbt_notification_unique_idx.sql`), the answer-key regrade function (`20261120090000_cbt_regrade.sql`, additive: one service-role-only function that recomputes submitted attempts after a key correction, no table and no column), the student question-report table (`20261119130000_question_reports.sql`, additive: one new table, two trigger-maintained counter columns on `exam_questions`), the additive institution-intelligence schema (20261117120000), its transactional research importer (20261117121000) and the institution review gate (20261118120000), the generated institution-catalogue registry load (20261119120000), including two service-request boundary migrations, one idempotency migration, the CBT owner-expiry function, protocol fence, restricted v2 lifecycle, answer and finalize gateways, single-writing-session boundary and atomic question-import publication. The CBT page writer, leased submission and recovery are integrated **only for the local rehearsal**; the hosted staging path is not enabled or verified, so hosted finalization has not been exercised. Reconcile the hosted ledger and review every pending migration and its data effects before applying anything; do not blindly replay historical migrations against a populated project. The gateways grant authenticated owners directly callable leased answer and finalize RPCs; finalization additionally requires the current server revision, an active writing session and a durable operation key. Review hosted role membership and PostgREST/JWT behavior, and exercise both gateways against disposable staging, before any rollout. If an approved rollback is ever required, quiesce traffic first; roll back the writing-session migration before the gateway, lifecycle and protocol fence, and observe its refusal while session history or v2 attempts exist. In-flight destructive rollback safety is not proven. Duplicate migration version prefixes make a blind push unsafe. First reconcile every file and obtain an independently reviewed, approved staging migration procedure as described in `CBT_STAGING_VALIDATION_PREPARATION.md`.
+The local release candidate contains 102 migrations in `supabase/migrations/`, including the CBT deadline backfill (`20261124120000_cbt_deadline_backfill.sql`: data-only — it fills `cbt_attempts.expires_at` and `exam_duration_minutes` for in-progress attempts from the recorded start; no table, policy or permission change), the security-boundary hardening migration (`20261123150000`: grants-only — it revokes anonymous execution on three `SECURITY DEFINER`/trigger functions and pins the `search_path` of two helpers, with no table, policy or data change), the homepage-engagement migration (`20261123120000`: editable review fields, placeholder samples, database-backed FAQ categories and questions, and the social/contact settings seed), the editorial-lifecycle/reviews/admin-RPC migration (`20261122120000`: opportunity lifecycle columns, the moderated review table and summary function, the role-change function and the question-bank summary) and the verified-scholarship seed (`20261122121000`), the CBT notification partial unique index (`20261121150000_cbt_notification_unique_idx.sql`), the answer-key regrade function (`20261120090000_cbt_regrade.sql`, additive: one service-role-only function that recomputes submitted attempts after a key correction, no table and no column), the student question-report table (`20261119130000_question_reports.sql`, additive: one new table, two trigger-maintained counter columns on `exam_questions`), the additive institution-intelligence schema (20261117120000), its transactional research importer (20261117121000) and the institution review gate (20261118120000), the generated institution-catalogue registry load (20261119120000), including two service-request boundary migrations, one idempotency migration, the CBT owner-expiry function, protocol fence, restricted v2 lifecycle, answer and finalize gateways, single-writing-session boundary and atomic question-import publication. The CBT page writer, leased submission and recovery are integrated **only for the local rehearsal**; the hosted staging path is not enabled or verified, so hosted finalization has not been exercised. Reconcile the hosted ledger and review every pending migration and its data effects before applying anything; do not blindly replay historical migrations against a populated project. The gateways grant authenticated owners directly callable leased answer and finalize RPCs; finalization additionally requires the current server revision, an active writing session and a durable operation key. Review hosted role membership and PostgREST/JWT behavior, and exercise both gateways against disposable staging, before any rollout. If an approved rollback is ever required, quiesce traffic first; roll back the writing-session migration before the gateway, lifecycle and protocol fence, and observe its refusal while session history or v2 attempts exist. In-flight destructive rollback safety is not proven. Duplicate migration version prefixes make a blind push unsafe. First reconcile every file and obtain an independently reviewed, approved staging migration procedure as described in `CBT_STAGING_VALIDATION_PREPARATION.md`.
 
 Do not use a generic CLI reset or push for this migration set. Obtain separate authorization for a verified disposable target, reconcile every migration file and duplicate version, then rehearse the approved target-specific procedure. Compare the resulting schema and role fingerprints against the intended target; an extra column or other drift requires review.
 
@@ -256,13 +256,51 @@ Netlify is the production architecture (`docs/features/D5.md`).
 - functions `netlify/functions`, `external_node_modules = ["express", "serverless-http"]`
 - redirects and headers come from `netlify.toml` and `public/_headers`
 
-**Pass:** the deploy succeeds and `/` returns the application.
+**Green CI is not a deployment.** The steps below (and §3's migration order)
+are release prerequisites: passing the repository's checks proves the code is
+consistent, not that production has been migrated, relocated or measured.
+
+**Function region (deployment prerequisite).** The production audit found the
+API function deploying from `iad` (us-east-1) while `EduReach-V1` is `eu-west-1`
+(`docs/operations/ENVIRONMENTS.md` §1), so every database round trip the
+function makes crosses the Atlantic. The architecture requires the function
+region close to the database. A region change is only real after all three of
+these are checked, in order:
+
+1. **What region the site's functions actually deploy to** (site dashboard →
+   Functions; the audit found `iad`) and **whether this account can select a
+   functions region at all** — region selection is a Netlify platform/plan
+   feature; this repository does not set it anywhere (`netlify.toml` does not
+   select a region). If the account cannot select one, record the relocation
+   as an open follow-up instead of claiming it.
+2. **That a setting change actually relocates newly deployed functions** — a
+   region setting applies to functions built by later deploys and does not move
+   a deployment that already exists: change it, redeploy, then confirm the
+   deployed region changed.
+3. **That the database leg got shorter in reality** — the expected gain is on
+   the function → database path only (each Supabase query loses the
+   transatlantic round trip; the student → function path is not the claim).
+   No millisecond number is asserted anywhere in this repository until the
+   live measurement in §10 is done.
+
+**Pass:** the deploy succeeds, `/` returns the application, and the three
+region checks above have recorded answers.
 
 ## 10. Run smoke tests
 
 See the smoke-test plan below. Use **dedicated test accounts and synthetic data
 only** — no real student information, no publicly visible fake content, and nothing
 that contaminates analytics beyond the test session.
+
+**Live CBT resume/save check (required after a CBT release).** The release's
+latency numbers come from a local throttled harness (mocked API with a fixed
+300 ms per-response round trip, desktop Chromium, n=5 per metric), not from
+production. Against the production site, with a real account: start a timed
+session, save a few answers, refresh mid-session, and record the resume time
+and the save → acknowledged time from the browser's network panel; then
+confirm the answers survived the refresh and that the countdown follows the
+server deadline. Run this **after** the §3 migration and the §9 region checks,
+in that order, and record the measured numbers next to the harness numbers.
 
 **Pass:** every listed expectation holds.
 
